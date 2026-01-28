@@ -8,56 +8,46 @@ class Queue:
         return len(self.data) >= self.max
     def enqueue(self, element):
         if self.is_full():
-            print("fronta je plna, neda sa pridat prvok")
+            print("sklad je plny, nie je miesto na dalsi tovar")
             return False
         self.data.append(element)
         print("pridane: ", element)
         return True
     def dequeue(self):
         if self.is_empty():
-            print("fronta je prazdna, nie je co odstranit")
+            print("sklad je prazdny, nie je co vyskladnit")
             return None
         removed = self.data.pop(0)
-        print("odstranene: ", removed)
+        print("vyskladnene: ", removed)
         return removed
     def show(self):
-        print("obsah fronty: ", self.data)
+        print("na sklade: ", self.data)
 
-
-# q = Queue(3)
-# print(q.is_empty())
-# q.enqueue(10)
-# q.enqueue(20)
-# q.enqueue(30)
-# print(q.is_full())
-# q.dequeue()
-# q.dequeue()
-# q.show()
 
 def wait_enter():
     input("\npokracujte stlacenim enter...")
 
 def menu():
-    max_queue=int(input("zadaj maximalnu velkost fronty: "))
+    max_queue=int(input("zadaj maximalnu velkost skladu: "))
     q = Queue(max_queue)
     while True:
-        print("\n1) Is Empty - je prazdna")
-        print("2) Is Full - je plna")
-        print("3) Enqueue - pridat znak")
-        print("4) Dequeue - odstranit znak")
-        print("5) SHow - zobrazit frontu")
+        print("\n1) je sklad prazdny?")
+        print("2) je sklad plny?")
+        print("3) pridat tovar")
+        print("4) vyskladnit tovar")
+        print("5) zobrazit stav skladu")
         print("0) koniec")
         choice = input("zadaj volbu: ")
         if choice == "1":
-            print("ano, je prazdna" if q.is_empty() else "nie, nie je pazdna")
+            print("ano, je prazdny" if q.is_empty() else "nie, nie je pazdny")
             wait_enter()
         elif choice == "2":
-            print("ano, je plna" if q.is_full() else "nie, nie je plna")
+            print("ano, je plny" if q.is_full() else "nie, nie je plny")
             wait_enter()
         elif choice == "3":
-            symbol = input("zadaj znak na pridanie: ").strip()
+            symbol = input("zadaj kod noveho tovaru na pridanie do skladu: ").strip()
             if len(symbol) == 0:
-                print("nebol zadany ziaden znak")
+                print("nebol zadany ziaden kod")
             else:
                 q.enqueue(symbol)
                 wait_enter()
