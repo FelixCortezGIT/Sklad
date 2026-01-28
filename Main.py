@@ -65,7 +65,7 @@ class Warehouse:
             return False
         if place.queue.is_full():
             print(f"paletove miesto {place_name} je plne")
-            return false
+            return False
         return place.queue.enqueue(item_code)
     def issue_from_place(self, place_name: str):
         place = self.get_place(place_name)
@@ -73,6 +73,38 @@ class Warehouse:
             print("paletove miesto s tymto nazvom neexistuje")
             return None
         return place.queue.dequeue()
+    def change_place(self, source_place: str, target_place: str):
+        if not source_place.strip() or not target_place.strip():
+            print("nazvy paletovych miest nesmu byt prazdne")
+            return False
+        if source_place == target_place:
+            print("miesta Z a DO sa zhoduju")
+            return False
+        source = self.get_place(source_place)
+        target = self.get_place(target_place)
+        if source is None:
+            print(f"plaetove miesto {source_place} neexistuje")
+            return False
+        if target is None:
+            print(f"paletove miesto {target_place} neexistuje")
+            return False
+        if source.queue.is_empty():
+            print(f"z ktoreho paletove miesto {source_place} je prazdne, nie je co premiestnit")
+            return False
+        if target.queue.is_full():
+            print(f"cielove paletove miesto {target_place} je plne, neda sa premiestnit")
+            return False
+        item = source.queue.dequeue()
+        if item is None:
+            print("nepodarilo sa odobrat tovar zo zdroja")
+            return False
+        enquir = target.enqueue(item)
+        if not enquir:
+            print("zaskladnenie do noeho miesta zlyhalo, vraciam tovar opet na zdroj")
+            source.queue.enqueue(item)
+            return False
+        print(f"premiestnene: {item} z {source_place} do {target_place}")
+        return True
     def show(self):
         if not self.places:
             print("sklad zatial bez paletovych miest")
