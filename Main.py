@@ -13,11 +13,20 @@ class Queue:
         self.data.append(element)
         print("pridane: ", element)
         return True
+    def dequeue(self):
+        if self.is_empty():
+            print("fronta je prazdna, nie je co odstranit")
+            return None
+        removed = self.data.pop(0)
+        print("odstranene: ", removed)
+        return removed
 
 
-q = Queue(30)
-add = Queue(1)
-print(add.enqueue(20))
-print(add.enqueue(50))
+q = Queue(3)
 print(q.is_empty())
+q.enqueue(10)
+q.enqueue(20)
+q.enqueue(30)
 print(q.is_full())
+q.dequeue()
+q.dequeue()
