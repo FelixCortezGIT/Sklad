@@ -48,5 +48,15 @@ if choice == "1":
     print("ano, je prazdna" if q.is_empty() else "nie, nie je pazdna")
 elif choice == "2":
     print("ano, je plna" if q.is_full() else "nie, nie je plna")
+elif choice == "3":
+        symbol = input("zadaj znak na pridanie: ").strip()
+        if len(symbol) == 0:
+            print("nebol zadany ziaden znak")
+        else:
+            q.enqueue(symbol)
+elif choice == "4":
+        q.dequeue()
+elif choice == "5":
+        q.show()
 
 
