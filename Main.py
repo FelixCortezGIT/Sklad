@@ -23,6 +23,64 @@ class Queue:
     def show(self):
         print("na sklade: ", self.data)
 
+class PalletPlace:
+    def __init__(self, name: str, capacity: int):
+        self.name = name
+        self.capacity = capacity
+        self.queue = Queue(capacity)
+    def free_slots(self):
+        return self.capacity - len(self.queue.data)
+    def show(self):
+        print(f"[{self.name}] kapacita: {self.capacity}, obsadene: {len(self.queue.data)}, volne: {self.free_slots()}")
+        self.queue.show()
+
+class Warehouse:
+    def __init__(self):
+        self.places: list[PalletPlace] = []
+    def add_place(self, name: str, capacity: int):
+        if not name.strip():
+            print("nazov paletoveho miesta nesmie byt prazdny")
+            return False
+        if capacity <= 0:
+            print("kapacita paletoveho miesta musi byt kladne cele cislo")
+            return False
+        if self.get_place(name) is not None:
+            print("paletove miesto s takym nazvom uz existuje")
+            return False
+        self.places.append(PalletPlace(name, capacity))
+        print(f"paletove miesto {name} vytvorene s kapacitou {capacity}")
+        return True
+    def get_place(self, name: str):
+        for p in self.places:
+            if p.name == name:
+                return p
+        return None
+    def move_to_place(self, place_name: str, item_code: str):
+        place = self.get_place(place_name)
+        if place is None:
+            print("paletove miesto s tymto nazvom neexistuje")
+            return False
+        if not item_code.strip():
+            print("kod tovaru nesmie byt prazdny")
+            return False
+        if place.queue.is_full():
+            print(f"paletove miesto {place_name} je plne")
+            return false
+        return place.queue.enqueue(item_code)
+    def issue_from_place(self, place_name: str):
+        place = self.get_place(place_name)
+        if place is None:
+            print("paletove miesto s tymto nazvom neexistuje")
+            return None
+        return place.queue.dequeue()
+    def show(self):
+        if not self.places:
+            print("sklad zatial bez paletovych miest")
+        else:
+            print("sklad stav paletovych miest:")
+            for p in self.places:
+                p.show()
+
 
 def wait_enter():
     input("\npokracujte stlacenim enter...")
