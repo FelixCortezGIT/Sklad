@@ -20,7 +20,8 @@ class Queue:
         removed = self.data.pop(0)
         print("odstranene: ", removed)
         return removed
-
+    def show(self):
+        print("obsah fronty: ", self.data)
 
 q = Queue(3)
 print(q.is_empty())
@@ -30,3 +31,4 @@ q.enqueue(30)
 print(q.is_full())
 q.dequeue()
 q.dequeue()
+q.show()
