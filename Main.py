@@ -1,10 +1,12 @@
 class Queue:
     def __init__(self, max):
         self.max = max
+        self.data = []
     def is_empty(self):
         return len(self.data) == 0
     def is_full(self):
-        return len(self.data) >= max()
+        return len(self.data) >= self.max
 
-print(Queue(50).is_empty)
-print(Queue.is_full)
+q = Queue(30)
+print(q.is_empty())
+print(q.is_full())
