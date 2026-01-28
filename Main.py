@@ -34,29 +34,43 @@ class Queue:
 # q.dequeue()
 # q.show()
 
-max_queue=int(input("zadaj maximalnu velkost fronty: "))
-q= Queue(max_queue)
-print("\n1) Is Empty - je prazdna")
-print("2) Is Full - je plna")
-print("3) Enqueue - pridat znak")
-print("4) Dequeue - odstranit znak")
-print("5) SHow - zobrazit frontu")
-print("0) koniec")
+def wait_enter():
+    input("\npokracujte stlacenim enter...")
 
-choice = input("zadaj volbu: ")
-if choice == "1":
-    print("ano, je prazdna" if q.is_empty() else "nie, nie je pazdna")
-elif choice == "2":
-    print("ano, je plna" if q.is_full() else "nie, nie je plna")
-elif choice == "3":
-        symbol = input("zadaj znak na pridanie: ").strip()
-        if len(symbol) == 0:
-            print("nebol zadany ziaden znak")
+def menu():
+    max_queue=int(input("zadaj maximalnu velkost fronty: "))
+    q = Queue(max_queue)
+    while True:
+        print("\n1) Is Empty - je prazdna")
+        print("2) Is Full - je plna")
+        print("3) Enqueue - pridat znak")
+        print("4) Dequeue - odstranit znak")
+        print("5) SHow - zobrazit frontu")
+        print("0) koniec")
+        choice = input("zadaj volbu: ")
+        if choice == "1":
+            print("ano, je prazdna" if q.is_empty() else "nie, nie je pazdna")
+            wait_enter()
+        elif choice == "2":
+            print("ano, je plna" if q.is_full() else "nie, nie je plna")
+            wait_enter()
+        elif choice == "3":
+            symbol = input("zadaj znak na pridanie: ").strip()
+            if len(symbol) == 0:
+                print("nebol zadany ziaden znak")
+            else:
+                q.enqueue(symbol)
+                wait_enter()
+        elif choice == "4":
+            q.dequeue()
+            wait_enter()
+        elif choice == "5":
+            q.show()
+            wait_enter()
+        elif choice == "0":
+            print("koniec")
+            break
         else:
-            q.enqueue(symbol)
-elif choice == "4":
-        q.dequeue()
-elif choice == "5":
-        q.show()
+            print("neplatna volba, skus znova.")
 
-
+menu()
