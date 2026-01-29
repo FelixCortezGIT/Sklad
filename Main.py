@@ -132,7 +132,7 @@ class Warehouse:
         if item is None:
             print("nepodarilo sa odobrat tovar zo zdroja")
             return False
-        enquir = target.enqueue(item)
+        enquir = target.queue.enqueue(item)
         if not enquir:
             print("zaskladnenie do noeho miesta zlyhalo, vraciam tovar opet na zdroj")
             source.queue.enqueue(item)
@@ -165,7 +165,7 @@ def menu():
         print("0) koniec")
         choice = input("zadaj volbu: ")
         if choice == "1":
-            name = input("\nzadaj nazov noveho miesta v sklade").strip()
+            name = input("\nzadaj nazov noveho miesta v sklade: ").strip()
             try:
                 capacity = int(input("zadaj kapacitu noveho miesta: "))
             except ValueError:
