@@ -50,6 +50,40 @@ class Warehouse:
         self.places.append(PalletPlace(name, capacity))
         print(f"paletove miesto {name} vytvorene s kapacitou {capacity}")
         return True
+    def delete_place(self, name: str):
+        place = self.get_place(name)
+        if place is None:
+            print("paletove miesto neexistuje")
+            return False
+        if not place.queue.is_empty():
+            print("paletove miesto nie je prazdne, nemozem ho vymazat, presun najprv tovar inde")
+            return False
+        self.places = [p for p in self.places if p.name != name]
+        print(f"paletove miesto {name} zmazane")
+        return True
+    def list_place(self, place_name: str):
+        place = self.get_place(place_name)
+        if place is None:
+            print("paletove miesto neexistuje")
+            return False
+        place.show()
+        return True
+    def find_material(self, item_code: str):
+        if not item_code.strip():
+            print("kod tovaru nesmie byt prazdny")
+            return []
+        found = []
+        for p in self.places:
+            for idx, code in enumerate(p.queue.data):
+                if code == item_code:
+                    found.append((p.name, idx))
+        if not found:
+            print(f"material s kodom {item_code} sa v sklade nenasiel")
+        else:
+            print(f"material {item_code} najdeny na {len(found)} miestach: ")
+            for place_name, idx in found:
+                print(f"miesto {place_name} pozicia vo fronte: {idx}")
+        return found
     def get_place(self, name: str):
         for p in self.places:
             if p.name == name:
@@ -118,34 +152,56 @@ def wait_enter():
     input("\npokracujte stlacenim enter...")
 
 def menu():
-    max_queue=int(input("zadaj maximalnu velkost skladu: "))
-    q = Queue(max_queue)
+    w = Warehouse()
     while True:
-        print("\n1) je sklad prazdny?")
-        print("2) je sklad plny?")
-        print("3) pridat tovar")
-        print("4) vyskladnit tovar")
-        print("5) zobrazit stav skladu")
+        print("\n1) pridat paletove miesto")
+        print("2) zmazat paletove miesto")
+        print("3) vypis tovar na paletovom mieste")
+        print("4) najdi material podla kodu")
+        print("5) prijat material na paletove miesto")
+        print("6) vydat material z paletoveho miesta")
+        print("7) premiestnit material z miesta na miesto v sklade")
+        print("8) zobrazit stav skladu")
         print("0) koniec")
         choice = input("zadaj volbu: ")
         if choice == "1":
-            print("ano, je prazdny" if q.is_empty() else "nie, nie je pazdny")
+            name = input("\nzadaj nazov noveho miesta v sklade").strip()
+            try:
+                capacity = int(input("zadaj kapacitu noveho miesta: "))
+            except ValueError:
+                print("kapacita musi byt cislo")
+                wait_enter()
+                continue
+            w.add_place(name, capacity)
             wait_enter()
         elif choice == "2":
-            print("ano, je plny" if q.is_full() else "nie, nie je plny")
+            name = input("zadaj nazov miesta na zmazanie: ").strip()
+            w.delete_place(name)
             wait_enter()
         elif choice == "3":
-            symbol = input("zadaj kod noveho tovaru na pridanie do skladu: ").strip()
-            if len(symbol) == 0:
-                print("nebol zadany ziaden kod")
-            else:
-                q.enqueue(symbol)
-                wait_enter()
-        elif choice == "4":
-            q.dequeue()
+            name = input("zadaj miesto ktore si chces pozriet: "). strip()
+            w.list_place(name)
             wait_enter()
+        elif choice == "4":
+           code = input("zadaj kod materialu na vyhladavanie: ").strip()
+           w.find_material(code)
+           wait_enter()
         elif choice == "5":
-            q.show()
+            place = input("zadaj nazov miesta: ").strip()
+            code = input("zadaj kod tovaru na zaskladnenie: ").strip()
+            w.move_to_place(place, code)
+            wait_enter()
+        elif choice == "6":
+            place = input("zadaj nazov miesta: ").strip()
+            w.issue_from_place(place)
+            wait_enter()
+        elif choice == "7":
+            source = input("zadaj z ktoreho miesta chces premiestnit tovar: ").strip()
+            target = input("zadaj nove miesto pre tovar: ").strip()
+            w.change_place(source, target)
+            wait_enter()
+        elif choice == "8":
+            w.show()
             wait_enter()
         elif choice == "0":
             print("koniec")
