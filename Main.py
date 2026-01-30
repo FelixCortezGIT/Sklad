@@ -10,15 +10,13 @@ class Goods:
         return (f"goods code: {self.code} quantity: {self.quantity} name: {self.name} year: {self.year} manufacturer: {self.manufacturer} price: {self.price}")
 
 class Palletplaces:
-    def __init__(self, location):
-        self.location = location(str).strip()
+    def __init__(self, location_id):
+        self.location = location_id(str).strip()
     def add_goods(self, goods_code, qty):
 
     def remove_goods(self, goods_code, qty):
 
     def is_empty(self):
-
-    def is_full(self):
 
     def list_all(self):
 
@@ -28,6 +26,27 @@ class Palletplaces:
 
 class Warehouse:
     def __init__(self, location):
+        self.location = location(str).strip()
+
+    def add_place(self, location_id):
+
+    def remove_location(self, location_id,):
+
+    def list_goods(self):
+
+    def list_places(self):
+
+    def get_goods(self, code):
+
+    def goods_in(self, goods_code, qty):
+
+    def goods_out(self, goods_code, qty):
+
+    def move_location(self, goods_code, qty, from_loc, to_loc):
+
+
+
+
 
 
 
