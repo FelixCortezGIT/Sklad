@@ -45,15 +45,123 @@ class Warehouse:
         self.places = {}
         self.goods_catalog = {}
     def add_place(self, location_id):
-        if location_id in self.places:
-            raise ValueError(f"miesto {location_id} uz existuje")
-        self.places[location_id] = Palletplaces(location_id)
+        try:
+            if location_id in self.places:
+                raise ValueError(f"miesto {location_id} uz existuje")
+            self.places[location_id] = Palletplaces(location_id)
+            print(f"miesto {location_id} bolo pridane")
+        except ValueError:
+            print("chyba pri pridavani miesta")
     def remove_place(self, location_id):
+        try:
+            if location_id not in self.places:
+                raise KeyError(f"miesto {location_id} neexistuje")
+            if not self.places[location_id].is_empty():
+                raise ValueError(f"miesto {location_id} nie je prazdne")
+            del self.places[location_id]
+        except(KeyError, ValueError) as e:
+            print(f"chyba: {e}")
+    def list_place(self, location_id):
+        try:
+            place = self.get_place(location_id)
+            print(f"miesto: {place.location}")
+            goods_list = place.list_all()
+            if goods_list:
+                print(f"tovar na mieste: {location_id}")
+                for code, qty in goods_list.items():
+                    goods_info = self.get_goods(code)
+                    print(f"tovar: {code}: {goods_info.name} - {qty} ks (cena: {goods_info.price}€/ks)")
+                print(f"\ncelkovy pocet kusov: {place.get_quantity()}")
+            else:
+                print("miesto je prazdne")
+        except KeyError as e:
+            print(f"chyba: {e}")
+    def find_material(self, code):
+        try:
+            goods = self.get_goods(code)
+            print(f"najdeny tovar:")
+            print(goods)
+            print(f"\ntovar sa nachadza na miestach:")
+            found = False
+            for location_id, place in self.places.items():
+                if code in place.goods:
+                    print(f"  • {location_id}: {place.goods[code]} ks")
+                    found = True
+            if not found:
+                print("tovar sa nenachadza na ziadnom mieste v sklade")
+        except KeyError as e:
+            print(f"chyba: {e}")
+    def move_to_place(self, location_id, goods_code):
+        try:
+            qty = int(input("zadaj mnozstvo: "))
+        except ValueError:
+            print("mnozstvo musi byt cislo")
+            return
+        if goods_code not in self.goods_catalog:
+            print(f"tovar {goods_code} neexistuje")
+            return
         if location_id not in self.places:
-            raise KeyError(f"miesto {location_id} neexistuje")
-        if not self.places[location_id].is_empty():
-            raise ValueError(f"miesto {location_id} nie je prazdne")
-        del self.places[location_id]
+            print(f"miesto {location_id} neexistuje")
+            return
+        try:
+            self.places[location_id].add_goods(goods_code, qty)
+            print(f"tovar {goods_code} ({qty}ks) bol prijaty na miesto {location_id}")
+        except ValueError:
+            print("mnozstvo mus byt vecsie ako 0")
+    def issue_from_place(self, location_id, goods_code):
+        try:
+            qty = int(input("zadaj mnozstvo: "))
+        except ValueError:
+            print("mnozstvo musi byt cislo")
+            return
+        if goods_code not in self.goods_catalog:
+            print(f"tovar {goods_code} neexistuje v katalogu")
+            return
+        if location_id not in self.places:
+            print(f"miesto {location_id} neexistuje")
+            return
+        try:
+            self.places[location_id].remove_goods(goods_code, qty)
+            print(f"tovar {goods_code} ({qty}ks) bol vydany z miesta {location_id}")
+        except ValueError:
+            print("mnozstvo musi byt vecsie ako 0")
+        except KeyError:
+            print(f" tovar {goods_code} sa na mieste {location_id} nenachadza")
+    def change_place(self, from_loc, to_loc, goods_code):
+        try:
+            qty = int(input("zadaj mnozstvo: "))
+        except ValueError:
+            print("mnozstvo musi byt cislo")
+            return
+        if goods_code not in self.goods_catalog:
+            print(f"tovar {goods_code} neexistuje v katalogu")
+            return
+        if from_loc not in self.places:
+            print(f"miesto {from_loc} neexistuje")
+            return
+        if to_loc not in self.places:
+            print(f"miesto {to_loc} neexistuje")
+            return
+        try:
+            self.places[from_loc].remove_goods(goods_code, qty)
+            self.places[to_loc].add_goods(goods_code, qty)
+            print(f"tovar {goods_code} ({qty} ks) bol premiestneny z {from_loc} na {to_loc}")
+        except ValueError:
+            print(f"mnozstvo musi byt vecsie aok 0 alebo nedostatok tovaru")
+        except KeyError:
+            print(f"tovar {goods_code} sa na mieste {from_loc} nenechadza")
+    def show_catalog(self):
+        print("katalog tovaru")
+        if self.goods_catalog:
+            for code, goods in self.goods_catalog.items():
+                print(f"\nkod: {code}")
+                print(f"  nazov: {goods.name}")
+                print(f"  vyrobca: {goods.manufacturer}")
+                print(f"  rok vyroby: {goods.year}")
+                print(f"  cena: {goods.price}€")
+            print(f"celkovy pocet poloziek v katalogu: {len(self.goods_catalog)}")
+        else:
+            print("katalog je prazdny")
     def list_goods(self):
         return dict(self.goods_catalog)
     def list_places(self):
@@ -66,35 +174,11 @@ class Warehouse:
         if location_id not in self.places:
             raise KeyError(f"miesto {location_id} neexistuje")
         return self.places[location_id]
-    def goods_in(self, goods_code, qty, location_id):
-        if goods_code not in self.goods_catalog:
-            raise KeyError(f"tovar {goods_code} neexistuje")
-        if location_id not in self.places:
-            raise KeyError(f"miesto {location_id} neexistuje")
-        self.places[location_id].add_goods(goods_code, qty)
-        return self.places[location_id]
-    def goods_out(self, goods_code, qty, location_id):
-        if goods_code not in self.goods_catalog:
-            raise KeyError(f"tovar {goods_code} neexistuje")
-        if location_id not in self.places:
-            raise KeyError(f"miesto {location_id} neexistuje")
-        self.places[location_id].remove_goods(goods_code, qty)
-        return self.places[location_id]
-    def move_location(self, goods_code, qty, from_loc, to_loc):
-        if goods_code not in self.goods_catalog:
-            raise KeyError(f"tovar {goods_code} neexistuje")
-        if from_loc not in self.places:
-            raise KeyError(f"miesto {from_loc} neexistuje")
-        if to_loc not in self.places:
-            raise KeyError(f"miesto {to_loc} neexistuje")
-        self.places[from_loc].remove_goods(goods_code, qty)
-        self.places[to_loc].add_goods(goods_code, qty)
-        return from_loc, to_loc
     def show(self):
         if not self.places:
-            print("sklad zatial bez paletovych miest")
+            print("\nsklad je zatial bez paletovych miest")
         else:
-            print("sklad stav paletovych miest:")
+            print("\nstav paletovych miest v sklade:")
             for place in self.places.values():
                 print(place)
     def __repr__(self):
@@ -102,101 +186,72 @@ class Warehouse:
 
 
 
+def wait_enter():
+    input("\npokracuj stlacenim enter...")
+
 def menu():
     w = Warehouse()
-    print("\npridanie paletovych miest: ")
-    w.add_place("A100")
-    w.add_place("A200")
-    w.add_place("B100")
-    print(f"sklad opbsahuje miesta: {w.list_places()}")
     tovar1 = Goods("T001", 100, "Notebook", 2024, "Dell", 899.99)
     tovar2 = Goods("T002", 50, "Monitor", 2023, "Samsung", 299.50)
     tovar3 = Goods("T003", 150, "Myš", 2024, "Logitech", 25.00)
-    print("\ntovar:")
-    print(tovar1)
-    print(tovar2)
-    print(tovar3)
-    print("\npridanie tovaru:")
     w.goods_catalog[tovar1.code] = tovar1
     w.goods_catalog[tovar2.code] = tovar2
     w.goods_catalog[tovar3.code] = tovar3
-    print(w.show())
-    w.goods_in("T001", 10, "A100")
-    w.goods_in("T002", 5, "A100")
-    w.goods_in("T003", 7, "A200")
-    w.goods_in("T001", 15, "B100")
-    print()
-    print(w.show())
-    print(f"\nzoznam tovaru na mieste {w.get_place('A100').location}")
-    print(w.get_place("A100").list_all())
-    print("\nvydaj tovaru:")
-    w.goods_out("T001", 3, "A100")
-    print(w.get_place("A100"))
-    print("\npresun tovaru:")
-    from_loc, to_loc = w.move_location("T001", 3, "B100", "A200")
-    print(f"miesto {from_loc}: {w.get_place(from_loc)}")
-    print(f"miesto {to_loc}: {w.get_place(to_loc)}")
+    while True:
+        print("\n1) pridat paletove miesto")
+        print("2) zmazat paletove miesto")
+        print("3) vypis tovar na paletovom mieste")
+        print("4) najdi tovar podla kodu")
+        print("5) prijat tovar na paletove miesto")
+        print("6) vydat tovar z paletoveho miesta")
+        print("7) premiestnit tovar z miesta na miesto v sklade")
+        print("8) zobrazit stav skladu")
+        print("9) zobrazit katalog tovaru")
+        print("0) koniec")
+        choice = input("zadaj volbu: ").strip()
+        if choice == "1":
+            location_id = input("\nzadaj nazov noveho miesta v sklade: ").strip()
+            w.add_place(location_id)
+            wait_enter()
+        elif choice == "2":
+            location_id = input("\nzadaj nazov miesta na zmazanie: ").strip()
+            w.remove_place(location_id)
+            wait_enter()
+        elif choice == "3":
+            location_id = input("\nzadaj miesto ktore si chces pozriet: ").strip()
+            w.list_place(location_id)
+            wait_enter()
+        elif choice == "4":
+            code = input("\nzadaj kod materialu na vyhladavanie: ").strip()
+            w.find_material(code)
+            wait_enter()
+        elif choice == "5":
+            location_id = input("\nzadaj nazov miesta: ").strip()
+            code = input("zadaj kod tovaru na zaskladnenie: ").strip()
+            w.move_to_place(location_id, code)
+            wait_enter()
+        elif choice == "6":
+            location_id = input("\nzadaj nazov miesta: ").strip()
+            code = input("zadaj kod tovaru na vydanie: ").strip()
+            w.issue_from_place(location_id, code)
+            wait_enter()
+        elif choice == "7":
+            from_loc = input("\nzadaj z ktoreho miesta chces premiestnit tovar: ").strip()
+            to_loc = input("zadaj nove miesto pre tovar: ").strip()
+            code = input("zadaj kod tovaru: ").strip()
+            w.change_place(from_loc, to_loc, code)
+            wait_enter()
+        elif choice == "8":
+            w.show()
+            wait_enter()
+        elif choice == "9":
+            w.show_catalog()
+            wait_enter()
+        elif choice == "0":
+            print("\nkoniec")
+            break
+        else:
+            print("neplatna volba")
+            wait_enter()
+
 menu()
-
-# def wait_enter():
-#     input("\npokracujte stlacenim enter...")
-
-# def menu():
-#     w = Warehouse()
-#     while True:
-#         print("\n1) pridat paletove miesto")
-#         print("2) zmazat paletove miesto")
-#         print("3) vypis tovar na paletovom mieste")
-#         print("4) najdi tovar podla kodu")
-#         print("5) prijat tovar na paletove miesto")
-#         print("6) vydat tovar z paletoveho miesta")
-#         print("7) premiestnit tovar z miesta na miesto v sklade")
-#         print("8) zobrazit stav skladu")
-#         print("0) koniec")
-#         choice = input("zadaj volbu: ")
-#         if choice == "1":
-#             name = input("\nzadaj nazov noveho miesta v sklade: ").strip()
-#             try:
-#                 capacity = int(input("zadaj kapacitu noveho miesta: "))
-#             except ValueError:
-#                 print("kapacita musi byt cislo")
-#                 wait_enter()
-#                 continue
-#             w.add_place(name, capacity)
-#             wait_enter()
-#         elif choice == "2":
-#             name = input("zadaj nazov miesta na zmazanie: ").strip()
-#             w.delete_place(name)
-#             wait_enter()
-#         elif choice == "3":
-#             name = input("zadaj miesto ktore si chces pozriet: "). strip()
-#             w.list_place(name)
-#             wait_enter()
-#         elif choice == "4":
-#            code = input("zadaj kod materialu na vyhladavanie: ").strip()
-#            w.find_material(code)
-#            wait_enter()
-#         elif choice == "5":
-#             place = input("zadaj nazov miesta: ").strip()
-#             code = input("zadaj kod tovaru na zaskladnenie: ").strip()
-#             w.move_to_place(place, code)
-#             wait_enter()
-#         elif choice == "6":
-#             place = input("zadaj nazov miesta: ").strip()
-#             w.issue_from_place(place)
-#             wait_enter()
-#         elif choice == "7":
-#             source = input("zadaj z ktoreho miesta chces premiestnit tovar: ").strip()
-#             target = input("zadaj nove miesto pre tovar: ").strip()
-#             w.change_place(source, target)
-#             wait_enter()
-#         elif choice == "8":
-#             w.show()
-#             wait_enter()
-#         elif choice == "0":
-#             print("koniec")
-#             break
-#         else:
-#             print("neplatna volba, skus znova.")
-#
-# menu()
