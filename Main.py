@@ -17,6 +17,7 @@ class Palletplaces:
         if qty <= 0:
             raise ValueError("mnozstvo musi byt vecsie ako 0")
         self.goods[goods_code] = self.goods.get(goods_code, 0) + qty
+        return self.goods[goods_code]
     def remove_goods(self, goods_code, qty):
         if qty <= 0:
             raise ValueError("mnozstvo musi byt vecsie ako 0")
@@ -25,8 +26,10 @@ class Palletplaces:
         if self.goods[goods_code] < qty:
             raise ValueError(f"nedostatok tovaru. dostupne: {self.goods[goods_code]}")
         self.goods[goods_code] -= qty
-        if self.goods[goods_code] == 0:
+        remaining = self.goods[goods_code]
+        if remaining == 0:
             del self.goods[goods_code]
+        return remaining
     def is_empty(self):
         return len(self.goods) == 0
     def list_all(self):
@@ -36,33 +39,76 @@ class Palletplaces:
     def __repr__(self):
         return f"palet places: (location={self.location}, goods={self.goods})"
 
-# class Warehouse:
-#     def __init__(self, location: str):
-#         self.location = location
-#
-#     def add_place(self, location_id):
-#
-#     def remove_location(self, location_id,):
-#
-#     def list_goods(self):
-#
-#     def list_places(self):
-#
-#     def get_goods(self, code):
-#
-#     def get_place(self, location_id):
-#
-#     def goods_in(self, goods_code, qty):
-#
-#     def goods_out(self, goods_code, qty):
-#
-#     def move_location(self, goods_code, qty, from_loc, to_loc):
-#
+class Warehouse:
+    def __init__(self, location: str = ""):
+        self.location = location
+        self.places = {}
+        self.goods_catalog = {}
+    def add_place(self, location_id):
+        if location_id in self.places:
+            raise ValueError(f"miesto {location_id} uz existuje")
+        self.places[location_id] = Palletplaces(location_id)
+    def remove_place(self, location_id):
+        if location_id not in self.places:
+            raise KeyError(f"miesto {location_id} neexistuje")
+        if not self.places[location_id].is_empty():
+            raise ValueError(f"miesto {location_id} nie je prazdne")
+        del self.places[location_id]
+    def list_goods(self):
+        return dict(self.goods_catalog)
+    def list_places(self):
+        return list(self.places.keys())
+    def get_goods(self, code):
+        if code not in self.goods_catalog:
+            raise KeyError(f"tovar {code} neexistuje")
+        return self.goods_catalog[code]
+    def get_place(self, location_id):
+        if location_id not in self.places:
+            raise KeyError(f"miesto {location_id} neexistuje")
+        return self.places[location_id]
+    def goods_in(self, goods_code, qty, location_id):
+        if goods_code not in self.goods_catalog:
+            raise KeyError(f"tovar {goods_code} neexistuje")
+        if location_id not in self.places:
+            raise KeyError(f"miesto {location_id} neexistuje")
+        self.places[location_id].add_goods(goods_code, qty)
+        return self.places[location_id]
+    def goods_out(self, goods_code, qty, location_id):
+        if goods_code not in self.goods_catalog:
+            raise KeyError(f"tovar {goods_code} neexistuje")
+        if location_id not in self.places:
+            raise KeyError(f"miesto {location_id} neexistuje")
+        self.places[location_id].remove_goods(goods_code, qty)
+        return self.places[location_id]
+    def move_location(self, goods_code, qty, from_loc, to_loc):
+        if goods_code not in self.goods_catalog:
+            raise KeyError(f"tovar {goods_code} neexistuje")
+        if from_loc not in self.places:
+            raise KeyError(f"miesto {from_loc} neexistuje")
+        if to_loc not in self.places:
+            raise KeyError(f"miesto {to_loc} neexistuje")
+        self.places[from_loc].remove_goods(goods_code, qty)
+        self.places[to_loc].add_goods(goods_code, qty)
+        return from_loc, to_loc
+    def show(self):
+        if not self.places:
+            print("sklad zatial bez paletovych miest")
+        else:
+            print("sklad stav paletovych miest:")
+            for place in self.places.values():
+                print(place)
+    def __repr__(self):
+        return f"warehouse (location={self.location}, places={len(self.places)}, goods={len(self.goods_catalog)})"
+
 
 
 def menu():
-    miesto = Palletplaces("A100")
-    miesto = Palletplaces("A200")
+    w = Warehouse()
+    print("\npridanie paletovych miest: ")
+    w.add_place("A100")
+    w.add_place("A200")
+    w.add_place("B100")
+    print(f"sklad opbsahuje miesta: {w.list_places()}")
     tovar1 = Goods("T001", 100, "Notebook", 2024, "Dell", 899.99)
     tovar2 = Goods("T002", 50, "Monitor", 2023, "Samsung", 299.50)
     tovar3 = Goods("T003", 150, "Myš", 2024, "Logitech", 25.00)
@@ -71,25 +117,25 @@ def menu():
     print(tovar2)
     print(tovar3)
     print("\npridanie tovaru:")
-    miesto.add_goods("T001", 10) # osetrenie aby sa pytal na ktore miesto pridat tovar
-    miesto.add_goods("T002", 5)
-    miesto.add_goods("T003", 7)
-    print(miesto)
-    print(f"celkove mnozstvo: {miesto.get_quantity()}")
-    print(f"\nzoznam tovaru na mieste {miesto.location}")
-    print(miesto.list_all())
-    print("\nodobratie tovaru:")
-    miesto.remove_goods("T001", 5)
-    print(miesto)
-    print(f"celkove mnozstvo: {miesto.get_quantity()}")
-    print(f"\nprazdne: {miesto.is_empty()}")
-    print("\nvyprazdnenie miesta:")
-    miesto.remove_goods("T001", 5) # osetrene ak odoberies viac ako mas, spadne program
-    miesto.remove_goods("T002", 5)
-    miesto.remove_goods("T003", 7)
-    print(miesto)
-    print(f"prazdne: {miesto.is_empty()}")
-
+    w.goods_catalog[tovar1.code] = tovar1
+    w.goods_catalog[tovar2.code] = tovar2
+    w.goods_catalog[tovar3.code] = tovar3
+    print(w.show())
+    w.goods_in("T001", 10, "A100")
+    w.goods_in("T002", 5, "A100")
+    w.goods_in("T003", 7, "A200")
+    w.goods_in("T001", 15, "B100")
+    print()
+    print(w.show())
+    print(f"\nzoznam tovaru na mieste {w.get_place('A100').location}")
+    print(w.get_place("A100").list_all())
+    print("\nvydaj tovaru:")
+    w.goods_out("T001", 3, "A100")
+    print(w.get_place("A100"))
+    print("\npresun tovaru:")
+    from_loc, to_loc = w.move_location("T001", 3, "B100", "A200")
+    print(f"miesto {from_loc}: {w.get_place(from_loc)}")
+    print(f"miesto {to_loc}: {w.get_place(to_loc)}")
 menu()
 
 # def wait_enter():
