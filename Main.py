@@ -15,16 +15,20 @@ class Palletplaces:
         self.goods = {}
     def add_goods(self, goods_code, qty):
         if qty <= 0:
-            raise ValueError("mnozstvo musi byt vecsie ako 0")
+            print("mnozstvo musi byt vecsie ako 0")
+            return None
         self.goods[goods_code] = self.goods.get(goods_code, 0) + qty
         return self.goods[goods_code]
     def remove_goods(self, goods_code, qty):
         if qty <= 0:
-            raise ValueError("mnozstvo musi byt vecsie ako 0")
+            print("mnozstvo musi byt vecsie ako 0")
+            return None
         if goods_code not in self.goods:
-            raise KeyError(f"tovar {goods_code} sa na mieste nenachadza")
+            print(f"tovar {goods_code} sa na mieste nenachadza")
+            return None
         if self.goods[goods_code] < qty:
-            raise ValueError(f"nedostatok tovaru. dostupne: {self.goods[goods_code]}")
+            print(f"nedostatok tovaru. dostupne: {self.goods[goods_code]}")
+            return None
         self.goods[goods_code] -= qty
         remaining = self.goods[goods_code]
         if remaining == 0:
@@ -45,52 +49,55 @@ class Warehouse:
         self.places = {}
         self.goods_catalog = {}
     def add_place(self, location_id):
-        try:
-            if location_id in self.places:
-                raise ValueError(f"miesto {location_id} uz existuje")
-            self.places[location_id] = Palletplaces(location_id)
-            print(f"miesto {location_id} bolo pridane")
-        except ValueError:
-            print("chyba pri pridavani miesta")
+        if location_id in self.places:
+            print(f"miesto {location_id} uz existuje")
+            return False
+        self.places[location_id] = Palletplaces(location_id)
+        print(f"miesto {location_id} bolo pridane")
+        return True
     def remove_place(self, location_id):
-        try:
-            if location_id not in self.places:
-                raise KeyError(f"miesto {location_id} neexistuje")
-            if not self.places[location_id].is_empty():
-                raise ValueError(f"miesto {location_id} nie je prazdne")
-            del self.places[location_id]
-        except(KeyError, ValueError) as e:
-            print(f"chyba: {e}")
+        if location_id not in self.places:
+            print(f"miesto {location_id} neexistuje")
+            return False
+        if not self.places[location_id].is_empty():
+            print(f"miesto {location_id} nie je prazdne")
+            return False
+        del self.places[location_id]
+        print(f"miesto {location_id} zmazane")
+        return True
     def list_place(self, location_id):
-        try:
-            place = self.get_place(location_id)
-            print(f"miesto: {place.location}")
-            goods_list = place.list_all()
-            if goods_list:
-                print(f"tovar na mieste: {location_id}")
-                for code, qty in goods_list.items():
-                    goods_info = self.get_goods(code)
-                    print(f"tovar: {code}: {goods_info.name} - {qty} ks (cena: {goods_info.price}€/ks)")
-                print(f"\ncelkovy pocet kusov: {place.get_quantity()}")
-            else:
-                print("miesto je prazdne")
-        except KeyError as e:
-            print(f"chyba: {e}")
+        if location_id not in self.places:
+            print(f"miesto {location_id} neexistuje")
+            return
+        place = self.get_place(location_id)
+        print(f"miesto: {place.location}")
+        goods_list = place.list_all()
+        if goods_list:
+            print(f"tovar na mieste: {location_id}")
+            for code, qty in goods_list.items():
+                if code not in self.goods_catalog:
+                    print(f"tovar {code} - {qty}ks nie je v katalogu")
+                    continue
+                goods_info = self.get_goods(code)
+                print(f"tovar: {code}: {goods_info.name} - {qty} ks (cena: {goods_info.price}€/ks)")
+            print(f"\ncelkovy pocet kusov: {place.get_quantity()}")
+        else:
+            print("miesto je prazdne")
     def find_material(self, code):
-        try:
-            goods = self.get_goods(code)
-            print(f"najdeny tovar:")
-            print(goods)
-            print(f"\ntovar sa nachadza na miestach:")
-            found = False
-            for location_id, place in self.places.items():
-                if code in place.goods:
-                    print(f"  • {location_id}: {place.goods[code]} ks")
-                    found = True
-            if not found:
-                print("tovar sa nenachadza na ziadnom mieste v sklade")
-        except KeyError as e:
-            print(f"chyba: {e}")
+        if code not in self.goods_catalog:
+            print(f"tovar {code} neexistuje v katalogu")
+            return
+        goods = self.get_goods(code)
+        print(f"najdeny tovar:")
+        print(goods)
+        print(f"\ntovar sa nachadza na miestach:")
+        found = False
+        for location_id, place in self.places.items():
+            if code in place.goods:
+                print(f"  • {location_id}: {place.goods[code]} ks")
+                found = True
+        if not found:
+            print("tovar sa nenachadza na ziadnom mieste v sklade")
     def move_to_place(self, location_id, goods_code):
         try:
             qty = int(input("zadaj mnozstvo: "))
@@ -103,11 +110,12 @@ class Warehouse:
         if location_id not in self.places:
             print(f"miesto {location_id} neexistuje")
             return
-        try:
-            self.places[location_id].add_goods(goods_code, qty)
+        result = self.places[location_id].add_goods(goods_code, qty)
+        if result is not None:
             print(f"tovar {goods_code} ({qty}ks) bol prijaty na miesto {location_id}")
-        except ValueError:
+        else:
             print("mnozstvo mus byt vecsie ako 0")
+            pass
     def issue_from_place(self, location_id, goods_code):
         try:
             qty = int(input("zadaj mnozstvo: "))
@@ -120,13 +128,9 @@ class Warehouse:
         if location_id not in self.places:
             print(f"miesto {location_id} neexistuje")
             return
-        try:
-            self.places[location_id].remove_goods(goods_code, qty)
+        result = self.places[location_id].remove_goods(goods_code, qty)
+        if result is not None:
             print(f"tovar {goods_code} ({qty}ks) bol vydany z miesta {location_id}")
-        except ValueError:
-            print("mnozstvo musi byt vecsie ako 0")
-        except KeyError:
-            print(f" tovar {goods_code} sa na mieste {location_id} nenachadza")
     def change_place(self, from_loc, to_loc, goods_code):
         try:
             qty = int(input("zadaj mnozstvo: "))
@@ -142,14 +146,11 @@ class Warehouse:
         if to_loc not in self.places:
             print(f"miesto {to_loc} neexistuje")
             return
-        try:
-            self.places[from_loc].remove_goods(goods_code, qty)
-            self.places[to_loc].add_goods(goods_code, qty)
-            print(f"tovar {goods_code} ({qty} ks) bol premiestneny z {from_loc} na {to_loc}")
-        except ValueError:
-            print(f"mnozstvo musi byt vecsie aok 0 alebo nedostatok tovaru")
-        except KeyError:
-            print(f"tovar {goods_code} sa na mieste {from_loc} nenechadza")
+        remaining = self.places[from_loc].remove_goods(goods_code, qty)
+        if remaining is None:
+            return None
+        self.places[to_loc].add_goods(goods_code, qty)
+        print(f"tovar {goods_code} ({qty} ks) bol premiestneny z {from_loc} na {to_loc}")
     def show_catalog(self):
         print("katalog tovaru")
         if self.goods_catalog:
@@ -162,17 +163,13 @@ class Warehouse:
             print(f"celkovy pocet poloziek v katalogu: {len(self.goods_catalog)}")
         else:
             print("katalog je prazdny")
-    def list_goods(self):
-        return dict(self.goods_catalog)
-    def list_places(self):
-        return list(self.places.keys())
     def get_goods(self, code):
         if code not in self.goods_catalog:
-            raise KeyError(f"tovar {code} neexistuje")
+            print(f"tovar {code} neexistuje")
         return self.goods_catalog[code]
     def get_place(self, location_id):
         if location_id not in self.places:
-            raise KeyError(f"miesto {location_id} neexistuje")
+            print(f"miesto {location_id} neexistuje")
         return self.places[location_id]
     def show(self):
         if not self.places:
